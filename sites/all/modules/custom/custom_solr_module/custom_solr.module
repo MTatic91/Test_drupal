@@ -1,0 +1,99 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: marko
+ * Date: 5/7/15
+ * Time: 11:39 AM
+ */
+
+/**
+ * Implements hook_block().
+ */
+function custom_solr_block_info() {
+  // Top user menu.
+  $blocks['custom_query_search'] = array(
+    'info' => t('Printing the custom query search'),
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function custom_solr_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'custom_query_search':
+      $block['subject'] = t('Custom query Solr');
+      $block['content'] = some_custom_solr_query();
+      break;
+
+  }
+
+  return $block;
+}
+
+/**
+ * Custom function for printing custom solr query.
+ */
+function some_custom_solr_query() {
+
+  global $language;
+
+  // Loading server and index.
+  $server = search_api_server_load('solr');
+  $index = search_api_index_load('solr_index');
+  $query = new SearchApiQuery($index);
+
+  // Search by keywords.
+  $query->keys('Abdo');
+
+  // Field.
+  $query->fields(array('title', 'body:value'));
+
+  // Range.
+  $query->range(0, 10);
+
+  // Filters.
+  $filter = $query->createFilter('AND');
+  $filter->condition('type', 'article', '=');
+
+  $solr = new SearchApiSolrService($server);
+  $result = $solr->search($query);
+
+  // Conditions.
+  $query->condition('language', $language->language, '=');
+
+  // Theme item list for Result in title.
+  $results['items'] = array();
+  $results['title'] = 'Results from custom query:';
+  $results['type'] = 'ul';
+  $results['attributes']['class'] = '';
+  foreach ($result['results'] as $id) {
+
+    // Setting items with link to node page.
+    $results['items'][] = l($result['results'][$id['id']]['fields']['title'][0], 'node/' . $result['results'][$id['id']]['fields']['nid']); /*$result['results'][$id['id']]['fields']['url']*/
+  }
+  $results_title = theme_item_list($results);
+
+  return $results_title;
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+
+function custom_solr_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {
+    case 'webform_client_form_66':
+      $page_num = $form['details']['page_num']['#value'];
+      $page_count = $form['details']['page_count']['#value'];
+      if ($page_num != $page_count) {
+        unset($form['captcha']);
+      }
+      break;
+  }
+}

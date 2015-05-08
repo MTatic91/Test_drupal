@@ -1,0 +1,4 @@
+name = Custom solr
+description = Custom module for creating custom query search
+core = 7.x
+

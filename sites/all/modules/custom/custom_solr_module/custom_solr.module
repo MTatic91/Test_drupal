@@ -71,7 +71,6 @@ function some_custom_solr_query() {
   $results['type'] = 'ul';
   $results['attributes']['class'] = '';
   foreach ($result['results'] as $id) {
-
     // Setting items with link to node page.
     $results['items'][] = l($result['results'][$id['id']]['fields']['title'][0], 'node/' . $result['results'][$id['id']]['fields']['nid']); /*$result['results'][$id['id']]['fields']['url']*/
   }
@@ -89,11 +88,131 @@ function some_custom_solr_query() {
 function custom_solr_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case 'webform_client_form_66':
+      // Setting captcha at the last page of webform.
       $page_num = $form['details']['page_num']['#value'];
       $page_count = $form['details']['page_count']['#value'];
       if ($page_num != $page_count) {
         unset($form['captcha']);
       }
+      $form['#validate'][] = 'custom_solr_form_validate';
+
       break;
   }
+
+  return $form;
 }
+
+/**
+ * @param $form
+ * @param $form_state
+ */
+function custom_solr_form_validate($form, &$form_state) {
+  if (isset($form)) {
+    if ($form['form_id']['#value'] == 'webform_client_form_66') {
+
+      switch ($form['details']['page_num']['#value']) {
+        case 1:
+          $minimum_length = 2;
+          if (strlen($form_state['values']['submitted']['first_name']) < 2) {
+            form_set_error('submitted][first_name', 'First name is too short need at least 2 characters.');
+          }
+          if (strlen($form_state['values']['submitted']['last_name']) < 2) {
+            form_set_error('submitted][last_name', 'Last name is too short need at least 2 characters.');
+          }
+          if (strpos($form_state['values']['submitted']['e_mail_adress'], 'mail.ru') ||
+            strpos($form_state['values']['submitted']['e_mail_adress'], 'yandex.ru')
+          ) {
+            form_set_error('submitted][e_mail_adress', 'Domain zones from mail.ru and yandex.ru are not allowed');
+          }
+          break;
+
+        case 2:
+          if (preg_match('#[0-9]#', $form_state['values']['submitted']['home_adress']['form_city'])) {
+            form_set_error('form_city', 'City can\'t contain numbers');
+            break;
+          }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_views_pre_render().
+ */
+function custom_solr_views_pre_render(&$view) {
+  if ($view->name == 'node_reference_webform') {
+
+    foreach ($view->_webform_submissions as $key => $array) {
+      foreach ($array as $webfrom_key => $values) {
+        $nid = $view->_webform_submissions[$key][$webfrom_key]->data[3][0];
+      }
+      $node = node_load($nid);
+      $wrapper = entity_metadata_wrapper('node', $node);
+      $field_image = $wrapper->field_image->value();
+      if ($field_image) {
+        $uri = $field_image['uri'];
+        $filename = $field_image['filename'];
+        $url = file_create_url($uri);
+        $output = '<img typeof="foaf:Image" src="' . $url . '" alt="" title="">';
+        $view->header['area_text_custom']->options['content'] = $output;
+      }
+    }
+  }
+}
+
+///**
+// * @param $data
+// *
+// * Getting data from view.
+// */
+//function custom_solr_views_data_alter(&$data) {
+//
+//
+//  $data['webform_submitted_data']['table']['join'] = array(
+//    'node' => array(
+//      'left_field' => 'nid',
+//      'field' => 'data',
+//      'extra' => array(
+//        array(
+//          'cid' => 3,
+//        ),
+//      ),
+//    ),
+//  );
+//
+//
+//// This example adds a relationship to table {foo}, so that 'foo' views can
+//  // add this table using a relationship. Because we don't want to write over
+//  // the primary key field definition for the {foo}.fid field, we use a dummy
+//  // field name as the key.
+//  $data['webform_submitted_data']['webform_submittion'] = array(
+//    'title' => t('Webform reference relationship'),
+//    'help' => t('Example help'),
+//    'relationship' => array(
+//      // Table we're joining to.
+//      'base' => 'node',
+//      // Field on the joined table.
+//      'base field' => 'nid',
+//      // Real field name on the 'foo' table.
+//      'field' => 'node_reference',
+//      'handler' => 'views_handler_relationship',
+//      'label' => t('Node for webforms'),
+//      'title' => t('Node for webforms'),
+//      'help' => t('More information about relationship.'),
+//    ),
+//  );
+//}
+//
+///**
+// * Format the output of data for this component.
+// */
+//function custom_solr_webform_display_node_reference_field($variables) {
+//  $element = $variables['element'];
+//  $items = array();
+//  foreach ((array) $element['#value'] as $value) {
+//    $nid = check_plain($value);
+//    $items[] = _webform_references_get_node_title($nid, TRUE);
+//  }
+//  $output = count($items) > 1 ? theme('item_list', array('items' => $items)) : (isset($items[0]) ? $items[0] : '');
+//  return $output;
+//}

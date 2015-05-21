@@ -135,7 +135,6 @@ function custom_solr_form_validate($form, &$form_state) {
  */
 function custom_solr_views_pre_render(&$view) {
   if ($view->name == 'node_reference_webform') {
-
     foreach ($view->_webform_submissions as $key => $array) {
       foreach ($array as $webfrom_key => $values) {
         $nid = $view->_webform_submissions[$key][$webfrom_key]->data[3][0];
@@ -147,7 +146,7 @@ function custom_solr_views_pre_render(&$view) {
         $uri = $field_image['uri'];
         $filename = $field_image['filename'];
         $url = file_create_url($uri);
-        $output = '<img typeof="foaf:Image" src="' . $url . '" alt="" title="">';
+        $output = theme('image', array('path' => $url));
         $view->header['area_text_custom']->options['content'] = $output;
       }
     }

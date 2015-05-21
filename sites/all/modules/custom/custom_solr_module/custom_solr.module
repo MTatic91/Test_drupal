@@ -74,11 +74,8 @@ function some_custom_solr_query() {
 }
 
 /**
- * @param $form
- * @param $form_state
- * @param $form_id
+ * Implements hook_form_alter().
  */
-
 function custom_solr_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case 'webform_client_form_66':

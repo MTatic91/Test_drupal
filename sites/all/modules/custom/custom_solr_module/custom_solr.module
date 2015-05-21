@@ -1,9 +1,7 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: marko
- * Date: 5/7/15
- * Time: 11:39 AM
+ * @file
+ * This module contains mentorship Solr task.
  */
 
 /**

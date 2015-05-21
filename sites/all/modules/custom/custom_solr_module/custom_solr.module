@@ -94,32 +94,35 @@ function custom_solr_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
- * @param $form
- * @param $form_state
+ * Custom validate function.
+ *
+ * @param array $form
+ *   Form data.
+ * @param array $form_state
+ *   Form state data.
  */
 function custom_solr_form_validate($form, &$form_state) {
   if (isset($form)) {
     if ($form['form_id']['#value'] == 'webform_client_form_66') {
-
       switch ($form['details']['page_num']['#value']) {
         case 1:
           $minimum_length = 2;
-          if (strlen($form_state['values']['submitted']['first_name']) < 2) {
-            form_set_error('submitted][first_name', 'First name is too short need at least 2 characters.');
+          if (strlen($form_state['values']['submitted']['first_name']) < $minimum_length) {
+            form_set_error('submitted][first_name', t('First name is too short need at least 2 characters.'));
           }
-          if (strlen($form_state['values']['submitted']['last_name']) < 2) {
-            form_set_error('submitted][last_name', 'Last name is too short need at least 2 characters.');
+          if (strlen($form_state['values']['submitted']['last_name']) < $minimum_length) {
+            form_set_error('submitted][last_name', t('Last name is too short need at least 2 characters.'));
           }
           if (strpos($form_state['values']['submitted']['e_mail_adress'], 'mail.ru') ||
             strpos($form_state['values']['submitted']['e_mail_adress'], 'yandex.ru')
           ) {
-            form_set_error('submitted][e_mail_adress', 'Domain zones from mail.ru and yandex.ru are not allowed');
+            form_set_error('submitted][e_mail_adress', t('Domain zones from mail.ru and yandex.ru are not allowed'));
           }
           break;
 
         case 2:
           if (preg_match('#[0-9]#', $form_state['values']['submitted']['home_adress']['form_city'])) {
-            form_set_error('form_city', 'City can\'t contain numbers');
+            form_set_error('form_city', t("City can't contain numbers"));
             break;
           }
       }

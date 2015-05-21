@@ -33,35 +33,28 @@ function custom_solr_block_view($delta = '') {
 }
 
 /**
- * Custom function for printing custom solr query.
+ * Custom function for printing custom Solr query.
  */
 function some_custom_solr_query() {
-
   global $language;
 
   // Loading server and index.
   $server = search_api_server_load('solr');
   $index = search_api_index_load('solr_index');
-  $query = new SearchApiQuery($index);
 
   // Search by keywords.
-  $query->keys('Abdo');
+  $query = new SearchApiQuery($index);
+  $query->keys('Abdo')
+    ->fields(array('title', 'body:value'))
+    ->condition('language', $language->language, '=')
+    ->range(0, 10);
 
-  // Field.
-  $query->fields(array('title', 'body:value'));
-
-  // Range.
-  $query->range(0, 10);
-
-  // Filters.
+  // Create filters.
   $filter = $query->createFilter('AND');
   $filter->condition('type', 'article', '=');
 
   $solr = new SearchApiSolrService($server);
   $result = $solr->search($query);
-
-  // Conditions.
-  $query->condition('language', $language->language, '=');
 
   // Theme item list for Result in title.
   $results['items'] = array();
@@ -70,7 +63,10 @@ function some_custom_solr_query() {
   $results['attributes']['class'] = '';
   foreach ($result['results'] as $id) {
     // Setting items with link to node page.
-    $results['items'][] = l($result['results'][$id['id']]['fields']['title'][0], 'node/' . $result['results'][$id['id']]['fields']['nid']); /*$result['results'][$id['id']]['fields']['url']*/
+    $results['items'][] = l(
+      $result['results'][$id['id']]['fields']['title'][0],
+      'node/' . $result['results'][$id['id']]['fields']['nid']
+    );
   }
   $results_title = theme_item_list($results);
 
